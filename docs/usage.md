@@ -53,25 +53,27 @@ After the whole process is done, an image file (*confusion_matrix.png*) is creat
 
 **Dataset structure**
 
-This program is designed to work with the Caltech 101 dataset (<a href="http://www.vision.caltech.edu/Image_Datasets/Caltech101/">http://www.vision.caltech.edu/Image_Datasets/Caltech101/</a>), but you can create your own dataset respecting this file structure and naming:
+This program is designed to work with the Caltech 101 dataset (<a href="http://www.vision.caltech.edu/Image_Datasets/Caltech101/">http://www.vision.caltech.edu/Image_Datasets/Caltech101/</a>), but you can create your own dataset respecting this folder structure structure and file naming:
 
 Dataset/<br/>
 &nbsp;&nbsp;category1/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0001.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0002.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0003.png<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0001.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0002.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0003.jpg<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;..<br/>
 &nbsp;&nbsp;category2/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0001.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0002.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0003.png<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0001.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0002.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0003.jpg<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;..<br/>
 &nbsp;&nbsp;category3/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0001.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0002.png<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;image0003.png<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0001.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0002.jpg<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;image_0003.jpg<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;..<br/>
 &nbsp;&nbsp;..
+
+Obiouvsly categories can have different names, as the executable will read any subfolder in the Dataset folder provided, but for now we'll just read files with the exact naming convention stated above and in jpg format. (Todo: read image files - jpg and png - with any name)
 
 As the confusion matrix is printed in an image file, the dataset should contain 2-8 categories to display it properly. It will still work with larger datasets, but the results will have to be read from the log file.
 
