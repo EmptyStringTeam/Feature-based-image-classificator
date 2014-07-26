@@ -72,7 +72,7 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
     clock_gettime( CLOCK_REALTIME, &start );
 
     int totalKeypoints  = 0;
-    int totalFilesCount = 1;
+    int totalFilesCount = 0;
 
     emit setupProgressBar( inputFolder, splitPercent );
 
@@ -85,12 +85,14 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
         char path[256];
         sprintf( path,"%s/%s", inputFolder.toStdString().c_str(), dir_list[ dirIx ].c_str() );
 
-        int dirFileCount   = num_files( path );
+        vector< string > pathFileList;
+
+        int dirFileCount   = num_images( path, pathFileList );
         int trainFileCount = floor( dirFileCount * splitPercent / 100.0f );
 
-        for( int fileIx = 1; fileIx<=trainFileCount; fileIx++)
+        for( int fileIx = 0; fileIx < trainFileCount; fileIx++ )
         {
-            sprintf( path,"%s/%s/image_%04d.jpg", inputFolder.toStdString().c_str(), dir_list[ dirIx ].c_str(), fileIx );
+            sprintf( path,"%s/%s/%s", inputFolder.toStdString().c_str(), dir_list[ dirIx ].c_str(), pathFileList[ fileIx ].c_str() );
             fileList.push_back( pair<int,string>( dirIx, path ) );
         }
     }
@@ -109,7 +111,7 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
 
         Mat img = imread( fileList[ fileIx ].second.c_str(), 1 );
 
-        cout << setw(4) << totalFilesCount << " " << toGlobalPath( fileList[ fileIx ].second ) << endl << flush;
+        cout << toGlobalPath( fileList[ fileIx ].second ) << endl << flush; // output current filename (cout only, not to logFile)
 
         vector< KeyPoint > keypoints;
         detector->detect( img, keypoints );
@@ -173,6 +175,7 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
 
     if( abortRequested )
     {
+        logStream << "Operation aborted by user.\n\n";
         emit throwError( "Operation aborted" );
         return;
     }
@@ -180,6 +183,14 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
     // done reading images
     emit imgReadingDone();
     clock_gettime( CLOCK_REALTIME, &img_read );
+
+    logStream << "\n";
+    logStream << "Extracted " << totalKeypoints << " keypoints from " << totalFilesCount << " images\n";
+    if( totalKeypoints < clusterSize )
+    {
+        clusterSize = totalKeypoints;
+        logStream << "\nWarning: totalKeypoints is less than desired clusterSize!\nNew clusterSize is " << totalKeypoints << "\n\n";
+    }
 
     int descriptorLen = method == "SIFT" ? 128 : 64;
 
@@ -232,7 +243,6 @@ void CodebookWorker::doWork( QString method, QString inputFolder, QString output
     int clusteringMins = ( clustering.tv_sec - img_read.tv_sec ) / 60;
     int clusteringSecs = ( clustering.tv_sec - img_read.tv_sec ) % 60;
 
-    logStream << "Total keypoints: " << totalKeypoints << "\n";
     logStream << "Image Reading:   " << imgReadingMins << "m, " << imgReadingSecs << "s.\n";
     logStream << "Clustering:      " << clusteringMins << "m, " << clusteringSecs << "s.\n";
 

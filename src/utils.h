@@ -14,7 +14,8 @@ using namespace std;
 
 int num_dirs( const char* path, vector< string >& dir_list );
 
-int num_files( const char* path );
+int num_images( const char* path );
+int num_images( const char* path, vector< string >& file_list );
 
 float strtofloat( const string& what );
 
@@ -26,5 +27,7 @@ string toLocalPath ( string globalPath );
 
 QString toGlobalPath( QString localPath  );
 QString toLocalPath ( QString globalPath );
+
+time_t fileLastModification(const char* filename );
 
 #endif // UTILS_H

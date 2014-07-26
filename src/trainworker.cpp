@@ -102,7 +102,7 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
 
     clock_gettime( CLOCK_REALTIME, &start );
 
-    int totalFilesCount = 1;
+    int totalFilesCount = 0;
 
     vector< int > labels;
     vector< vector< float > > histograms;
@@ -118,12 +118,14 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
         char path[256];
         sprintf( path,"%s/%s", datasetFolder.c_str(), dir_list[ dirIx ].c_str() );
 
-        int dirFileCount   = num_files( path );
+        vector< string > pathFileList;
+
+        int dirFileCount   = num_images( path, pathFileList );
         int trainFileCount = floor( dirFileCount * splitPercent / 100.0f );
 
-        for( int fileIx = 1; fileIx<=trainFileCount; fileIx++)
+        for( int fileIx = 0; fileIx < trainFileCount; fileIx++ )
         {
-            sprintf( path,"%s/%s/image_%04d.jpg", datasetFolder.c_str(), dir_list[ dirIx ].c_str(), fileIx );
+            sprintf( path,"%s/%s/%s", datasetFolder.c_str(), dir_list[ dirIx ].c_str(), pathFileList[ fileIx ].c_str() );
             fileList.push_back( pair<int,string>( dirIx, path ) );
         }
     }
@@ -143,7 +145,7 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
 
         Mat img = imread( fileList[ fileIx ].second.c_str(), 1 );
 
-        cout << setw(4) << totalFilesCount << " " << toGlobalPath( fileList[ fileIx ].second ) << "\n" << flush;
+        cout << toGlobalPath( fileList[ fileIx ].second ) << endl << flush; // output current filename (cout only, not to logFile)
 
         vector< KeyPoint > keypoints;
         detector->detect( img, keypoints );
@@ -171,6 +173,7 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
 
     if( abortRequested )
     {
+        logStream << "Operation aborted by user.\n\n";
         emit throwError( "Operation aborted" );
         return;
     }
@@ -214,7 +217,7 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
 
     emit trainingDone();
     clock_gettime( CLOCK_REALTIME, &trainingTime );
-    datasetSize = totalFilesCount - 1;
+    datasetSize = totalFilesCount;
 
     // Testing
     emit setupProgressBar( QString( datasetFolder.c_str() ), 100 - splitPercent );
@@ -226,12 +229,14 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
         char path[256];
         sprintf( path,"%s/%s", datasetFolder.c_str(), dir_list[ dirIx ].c_str() );
 
-        int dirFileCount   = num_files( path );
+        vector< string > pathFileList;
+
+        int dirFileCount   = num_images( path, pathFileList );
         int trainFileCount = floor( dirFileCount * splitPercent / 100.0f );
 
-        for( int fileIx = trainFileCount + 1; fileIx<=dirFileCount; fileIx++)
+        for( int fileIx = trainFileCount; fileIx < dirFileCount; fileIx++ )
         {
-            sprintf(path,"%s/%s/image_%04d.jpg", datasetFolder.c_str(), dir_list[ dirIx ].c_str(), fileIx );
+            sprintf( path,"%s/%s/%s", datasetFolder.c_str(), dir_list[ dirIx ].c_str(), pathFileList[ fileIx ].c_str() );
             fileList.push_back( pair<int,string>( dirIx, path ) );
         }
     }
@@ -242,7 +247,7 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
     for( unsigned int i = 0; i<confusion.size(); i++ )
         confusion[i].resize( categories.size() );
 
-    totalFilesCount = 1;
+    totalFilesCount = 0;
     // Test each image
     #pragma omp parallel for shared(detector,extractor,classifiers,confusion)
     for (unsigned int fileIx = 0; fileIx<fileList.size(); fileIx++)
@@ -285,8 +290,8 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
             }
         }
 
-        bool correct = response == fileList[ fileIx ].first;
-        logStream << setw(4) << totalFilesCount << " '" << toGlobalPath( fileList[ fileIx ].second ) << "' belongs to category: " << categories[ response ];
+        bool correct = (response == fileList[ fileIx ].first);
+        logStream << toGlobalPath( fileList[ fileIx ].second ) << " belongs to category: " << categories[ response ];
         logStream << ( correct? " CORRECT!\n" : " WRONG!\n" );
 
         #pragma omp critical
@@ -303,13 +308,14 @@ void TrainWorker::doWork( QString inputFile, QString histogramMethod )
 
     if( abortRequested )
     {
+        logStream << "Operation aborted by user.\n\n";
         emit throwError( "Operation aborted" );
         return;
     }
 
 
     clock_gettime( CLOCK_REALTIME, &testingTime );
-    datasetSize += totalFilesCount - 1;
+    datasetSize += totalFilesCount;
 
     // print times
     int readingMins  = ( readingTime .tv_sec - start.tv_sec ) / 60;

@@ -121,7 +121,7 @@ void MainWindow::setupProgressBar( QString inputFolder, int splitPercent )
         char path[256];
         sprintf(path,"%s/%s", inputFolder.toStdString().c_str(), dir_list[ dirIx ].c_str() );
 
-        file_count += floor( num_files( path ) * splitPercent / 100.0f );
+        file_count += floor( num_images( path ) * splitPercent / 100.0f );
     }
 
     progressBar->setRange ( 0, file_count );
@@ -254,6 +254,7 @@ void MainWindow::codebook_imgReadingDone()
 void MainWindow::codebook_clusteringDone()
 {
     playSuccess();
+    updateCodebookLabel();
 }
 
 ///
@@ -461,8 +462,17 @@ void MainWindow::updateCodebookLabel()
                         << "Method: " << method;
             if( method=="SURF" )
                 labelStream << ", Min Hessian: " << minHessian;
-            labelStream << ", Codebook clusters: " << clusterSize;
+            labelStream << ", Codebook clusters: " << clusterSize << "\n";
 
+            lastModified = fileLastModification( inputCodebook.toStdString().c_str() );
+
+            time_t curr_time;
+            time ( &curr_time );
+
+            if( curr_time - lastModified < 60*60 )
+                labelStream << "Created " << (curr_time - lastModified) / 60 << " minutes ago";
+            else
+                labelStream << "Created on " << ctime( &lastModified );
         }
         else
         {

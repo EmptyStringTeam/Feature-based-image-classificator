@@ -51,6 +51,7 @@ private:
     int    clusterSize;
     int    descriptorSize;
     int    datasetSize;
+    time_t lastModified;
 
     bool abortRequested;
 

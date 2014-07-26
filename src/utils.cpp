@@ -30,7 +30,7 @@ int num_dirs( const char* path, vector< string >& dir_list )
         if( strcmp( dent->d_name, "." ) == 0 || strcmp( dent->d_name, ".." ) == 0 )
             continue;
 
-        if( fstatat( dirfd( srcdir ), dent->d_name, &st, 0 ) < 0) // not a directory
+        if( fstatat( dirfd( srcdir ), dent->d_name, &st, 0 ) < 0 ) // not a directory
             continue;
 
         if( S_ISDIR( st.st_mode ) )
@@ -45,7 +45,14 @@ int num_dirs( const char* path, vector< string >& dir_list )
     return dir_count;
 }
 
-int num_files( const char* path )
+int num_images( const char* path )
+{
+    vector< string > file_list; // will be discarded
+
+    return num_images( path, file_list );
+}
+
+int num_images( const char* path, vector< string >& file_list )
 {
     DIR * dirp;
     struct dirent * entry;
@@ -58,11 +65,26 @@ int num_files( const char* path )
         return 0;
 
     while( ( entry = readdir( dirp ) ) != NULL )
-        if( entry->d_type == DT_REG ) // If the entry is a regular file
-             file_count++;
+    {
+        if( entry->d_type != DT_REG ) // If the entry is a regular file
+            continue;
+
+        string filename = entry->d_name;
+        string file_ext = filename.substr( filename.rfind(".") );
+
+        for( unsigned int i = 0; i< file_ext.length(); i++ ) // convert extention to lowercase
+            file_ext[ i ] = tolower( file_ext[ i ] );
+
+        if( file_ext == ".png" || file_ext == ".jpg" )
+        {
+            file_count++;
+            file_list.push_back( entry->d_name );
+        }
+    }
 
     closedir( dirp );
 
+    std::sort( file_list.begin(), file_list.end(), alphabeticalSort );
     return file_count;
 }
 
@@ -104,4 +126,14 @@ QString toGlobalPath( QString localPath  )
 QString toLocalPath( QString globalPath )
 {
     return QString( toLocalPath( globalPath.toStdString() ).c_str() );
+}
+
+time_t fileLastModification( const char* filename )
+{
+    struct stat st;
+
+    if( stat( filename, &st )==0 )
+        return st.st_mtime;
+
+    return -1;
 }
